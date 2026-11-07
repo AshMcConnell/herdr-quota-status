@@ -363,6 +363,10 @@ export default class StatusQuota extends View {
       : proj.status === "empty" ? "empty now"
       : proj.status === "through" ? "lasts to reset"
       : "";
+    const credits = typeof p.credits?.remaining === "number" ? p.credits.remaining : null;
+    const creditText = credits === null ? ""
+      : p.credits.unit === "usd" ? `$${credits.toFixed(2)} left`
+      : `${credits.toFixed(2)} credits left`;
     return v_flex().w(262).p(12).gap(7).bg(t.popover).border_1().border_color(t.border).rounded(10)
       .child(h_flex().gap(6).items_center()
         .when(!!icon, (el) => el.child(this.providerIcon(t, p.name, icon, 13)))
@@ -381,8 +385,12 @@ export default class StatusQuota extends View {
       .when(proj.leftAtReset !== null, (el) => el.child(div().text_size(11.5)
         .text_color(proj.leftAtReset >= 0 ? t.muted : t.ansi3)
         .child(proj.leftAtReset >= 0 ? `~${proj.leftAtReset}% left at reset` : `~${-proj.leftAtReset}% over at reset`)))
-      .when(others.length > 0, (el) => el.child(div().h(1).bg(t.border)))
-      .children(others.map((w) => this.windowRow(t, w)));
+      .when(others.length > 0 || credits !== null, (el) => el.child(div().h(1).bg(t.border)))
+      .children(others.map((w) => this.windowRow(t, w)))
+      .when(credits !== null, (el) => el.child(h_flex().gap(6).items_center()
+        .child(div().text_size(10.5).text_color(t.dim).child(p.credits.unit === "usd" ? "balance" : "monthly credits"))
+        .child(div().flex_1())
+        .child(div().text_size(11.5).text_color(t.muted).child(creditText))));
   }
 
   chips(t) {

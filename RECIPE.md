@@ -89,7 +89,12 @@ Top to bottom:
    and its 4 px bar in that window's own pace tone (`blocked` when `ahead`,
    `done` when `on_pace`/`behind`, `muted` when unknown) on the right,
    `· resets in 6d 10h` in 10.5 px `dim`.
-8. No footer text; the chip is the click target.
+8. When the provider reports a credit balance (`credits`), a
+   `monthly credits` row (or `balance` for a USD balance) with the
+   remaining amount on the right, in 10.5 / 11.5 px. Command Code is the
+   case here: quota-axi reports its 5-hour and weekly windows only, so the
+   monthly credit balance is the monthly figure.
+9. No footer text; the chip is the click target.
 
 ## Pace tick
 

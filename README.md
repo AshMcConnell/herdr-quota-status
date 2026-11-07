@@ -54,7 +54,9 @@ without herdr-quota the chips still work, but clicking one does nothing.
   countdown with its clock time; the run-out projection (`runs out in
   ~2h 33m · 23:22 · early estimate`, `lasts to reset`, or `empty now`);
   `~85 % over at reset` or `~87 % left at reset`; then up to three weekly
-  and monthly windows, each with its own bar and reset.
+  and monthly windows, each with its own bar and reset. When the provider
+  reports a credit balance (Command Code), a `monthly credits` row shows
+  what is left.
 - **Signed-out providers** are left out, since they have no percentage.
 - **quota-axi missing or failing**: a single red `quota read failed` chip;
   hover shows the error.
