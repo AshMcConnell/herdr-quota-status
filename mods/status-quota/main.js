@@ -16,6 +16,31 @@ const CARD_GAP = 20; // px of transparent space under the hover card
 
 const SPAWN_FAILURE = /could not be started|not found|no such|cannot start|permission denied|ENOENT|EACCES/i;
 
+// Three-letter labels for the chips; the card keeps the full name.
+const PROVIDER_LABELS = {
+  claude: "CLA",
+  codex: "CDX",
+  cursor: "CUR",
+  copilot: "COP",
+  grok: "GRK",
+  kimi: "KIM",
+  agy: "AGY",
+  opencode: "OCP",
+  "opencode-go": "OCG",
+  commandcode: "CMD",
+  muse: "MUS",
+  gemini: "GEM",
+  zai: "ZAI",
+  deepseek: "DSK",
+  openrouter: "ORT",
+  minimax: "MMX",
+  alibaba: "ALI",
+  elevenlabs: "ELV",
+  mimo: "MIM",
+  devin: "DEV",
+  higgsfield: "HIG",
+};
+
 // quota-axi provider id → icon. Herdr's own icons are used where they
 // exist; the rest ship in this mod's icons/ folder.
 const PROVIDER_ICONS = {
@@ -263,6 +288,7 @@ export default class StatusQuota extends View {
     const { p, percent, reset } = row;
     const risk = this.toneColor(t, this.providerPaceTone(p));
     const icon = PROVIDER_ICONS[p.name];
+    const label = PROVIDER_LABELS[p.name] ?? p.name.slice(0, 3).toUpperCase();
     const when = reset ? formatReset(reset.at, this.now) : "";
     const fill = Math.max(0, Math.min(100, percent));
     const body = h_flex().id(`quota-${p.name}`).relative().flex_none().items_center()
@@ -271,7 +297,7 @@ export default class StatusQuota extends View {
       .child(div().absolute().inset_0().bg(t.surface).opacity(0.5))
       .child(div().absolute().top(0).bottom(0).left(0).w(`${fill}%`).bg(risk).opacity(0.3))
       .when(!!icon, (el) => el.child(svg(icon).size(11).flex_none().text_color(t.muted)))
-      .child(div().text_color(t.muted).child(p.name))
+      .child(div().text_color(t.muted).child(label))
       .child(div().text_color(risk).child(`${percent}%`))
       .when(!!when, (el) => el.child(div().text_color(t.dim).child(`· ${when}`)));
     return HoverCard.new(`quota-card-${p.name}`).open_delay(220).close_delay(180)
@@ -357,7 +383,7 @@ export default class StatusQuota extends View {
       .map((p) => this.chipData(p))
       .filter(Boolean)
       .sort((a, b) => a.percent - b.percent || a.p.name.localeCompare(b.p.name));
-    const chipWidth = (r) => 70 + r.p.name.length * 6.6 + (r.reset ? 54 : 0)
+    const chipWidth = (r) => 70 + 3 * 6.6 + (r.reset ? 54 : 0)
       + (PROVIDER_ICONS[r.p.name] ? 15 : 0) + 12;
     const shown = [];
     let used = 0;

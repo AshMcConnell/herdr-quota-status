@@ -25,8 +25,9 @@ clipped:
 - A `surface` background at 50 % opacity, then the same box filled from the
   left to the remaining percentage in the pace tone at 30 % opacity.
 - Text: an 11 px provider icon (Herdr's own `icons/…` where it has one,
-  otherwise this mod's `icons/`), the name in `muted`, the percentage in
-  the pace tone, then
+  otherwise this mod's `icons/`), a three-letter code in `muted` from a
+  provider→label map (`CLA`, `ZAI`, `OCG`, `CMD`), falling back to the
+  first three letters uppercased, the percentage in the pace tone, then
   `· 4h 52m` in `dim` when the window has a reset time. Pace tone:
   `blocked` when quota-axi's window pace is `ahead` (spending runs ahead of
   the clock, so the window empties before it refills), `done` for
@@ -42,7 +43,7 @@ clipped:
   mod: "quota" })`); the trailing `+N` chip does the same and has a
   "N more providers" tooltip.
 - Up to ten chips. Count what fits from the row's leftover width, using an
-  estimate per chip (70 px + 6.6 px per name character + 54 px with a
+  estimate per chip (70 px + about 20 px for the code + 54 px with a
   reset + 15 px with an icon), leaving 28 px for `+N`.
 
 **Which window.** The provider's 5-hour window: `kind === "session"`, an id
