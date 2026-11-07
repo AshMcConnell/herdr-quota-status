@@ -30,6 +30,12 @@ clipped:
   the clock, so the window empties before it refills), `done` for
   `on_pace` and `behind`, `muted` when pace is unknown. The fill width is
   the amount left; only the colour is about pace.
+- The chip colour is **provider-wide**: red if any non-model window
+  (`session`, `weekly`, `monthly`, `rolling`) is `ahead`, or the scope's
+  runway is `projected_exhaustion` / `exhausted_now`; green when at least
+  one window has a pace and none is ahead; grey when none has one. This is
+  the Command Code case: its 5-hour is comfortable while the weekly is
+  running hot.
 - Click opens the Quota pane as a tab (`run("tab.new", { name: "Quota",
   mod: "quota" })`); the trailing `+N` chip does the same and has a
   "N more providers" tooltip.
@@ -57,7 +63,7 @@ Open delay 220 ms, close delay 180 ms. Panel: 262 px wide, 12 px padding,
 Top to bottom:
 
 1. Name in 13 px semibold `foreground`, plan in 11 px `dim`, the big
-   percentage in 13 px semibold, pace tone.
+   percentage in 13 px semibold, in that window's own pace tone.
 2. `<window label> window` in 11 px `muted`.
 3. A 5 px `surface` bar with the remaining percentage filled in the pace
    tone; no clipping, so the pace tick can stand proud.
@@ -74,9 +80,9 @@ Top to bottom:
    the burn is 0 or the window is empty.
 7. A 1 px `border` divider, then up to three other windows (`kind !==
    "session"`, weekly first): label in 10.5 px `dim`, percentage in 11.5 px
-   in the amount tone (`done` at 60 % and up, `ansi3` at 30–59 %, `blocked`
-   below) on the right, `· resets in 6d 10h` in 10.5 px `dim`, and a 4 px
-   bar.
+   and its 4 px bar in that window's own pace tone (`blocked` when `ahead`,
+   `done` when `on_pace`/`behind`, `muted` when unknown) on the right,
+   `· resets in 6d 10h` in 10.5 px `dim`.
 8. No footer text; the chip is the click target.
 
 ## Pace tick

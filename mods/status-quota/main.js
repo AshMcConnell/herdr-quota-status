@@ -1,7 +1,7 @@
 import { View, div, svg } from "gpui-kit";
 import { h_flex, v_flex, HoverCard } from "gpui-base";
 import { spaces, agents, theme, run, window, keys, exec, home } from "herdr";
-import { summarize, remainingTone, formatReset } from "./quota-model.js";
+import { summarize, formatReset } from "./quota-model.js";
 
 // The status bar, plus each provider's 5-hour window: a tinted chip whose
 // fill tracks the percentage left, and a hover card with the refill time,
@@ -115,17 +115,34 @@ export default class StatusQuota extends View {
     return { ok: t.done, warn: t.ansi3, low: t.blocked }[tone] ?? t.muted;
   }
 
-  /** Whether this window should last to its reset. quota-axi's pace says
+  /** Whether one window should last to its reset. quota-axi's pace says
    *  "ahead" when spending runs ahead of the clock — the case that empties
    *  the window before it refills — and "behind" when there is surplus.
    *  "on_pace" lands within a point of even, so it is not a warning. */
-  paceTone(win) {
+  windowPaceTone(win) {
     switch (win?.pace?.status) {
       case "ahead": return "low";
       case "on_pace":
       case "behind": return "ok";
       default: return "none";
     }
+  }
+
+  /** The provider's colour: red when any window is spending ahead of its
+   *  clock. The chip shows the 5-hour window, but the weekly or monthly
+   *  can be the one that runs out first (Command Code's weekly is the
+   *  usual case). Model-scoped buckets are left out. */
+  providerPaceTone(p) {
+    const runway = p?.tightest?.runway?.status;
+    if (runway === "projected_exhaustion" || runway === "exhausted_now") return "low";
+    let known = false;
+    for (const w of p?.windows ?? []) {
+      if (w.kind === "model") continue;
+      const tone = this.windowPaceTone(w);
+      if (tone === "low") return "low";
+      if (tone === "ok") known = true;
+    }
+    return known ? "ok" : "none";
   }
 
   /** Where the bar would reach at an even pace: the fraction of the window
@@ -220,7 +237,7 @@ export default class StatusQuota extends View {
    *  projection. */
   chip(t, row) {
     const { p, percent, reset } = row;
-    const risk = this.toneColor(t, this.paceTone(row.win));
+    const risk = this.toneColor(t, this.providerPaceTone(p));
     const when = reset ? formatReset(reset.at, this.now) : "";
     const fill = Math.max(0, Math.min(100, percent));
     const body = h_flex().id(`quota-${p.name}`).relative().flex_none().items_center()
@@ -239,7 +256,7 @@ export default class StatusQuota extends View {
   /** One of the provider's other windows (the weekly, a monthly bucket):
    *  its percentage, when it resets, and a bar. */
   windowRow(t, w) {
-    const tone = this.toneColor(t, remainingTone(w.percentRemaining));
+    const tone = this.toneColor(t, this.windowPaceTone(w));
     const mark = this.paceMark(w);
     return v_flex().gap(3)
       .child(h_flex().gap(6).items_center()
@@ -258,7 +275,7 @@ export default class StatusQuota extends View {
    *  chip cannot hold. */
   card(t, row) {
     const { p, percent, label, reset } = row;
-    const risk = this.toneColor(t, this.paceTone(row.win));
+    const risk = this.toneColor(t, this.windowPaceTone(row.win));
     const proj = this.projection(p, row.win);
     const when = reset ? formatReset(reset.at, this.now) : "";
     const resetClock = reset ? clockText(reset.at, this.now) : "";
