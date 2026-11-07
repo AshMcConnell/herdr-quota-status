@@ -11,10 +11,34 @@ import { summarize, formatReset } from "./quota-model.js";
 const FETCH_MS = 5 * 60_000;
 const TICK_MS = 60_000;
 const MAX_AGE = "4m";
-const MAX_CHIPS = 5;
+const MAX_CHIPS = 10;
 const CARD_GAP = 20; // px of transparent space under the hover card
 
 const SPAWN_FAILURE = /could not be started|not found|no such|cannot start|permission denied|ENOENT|EACCES/i;
+
+// quota-axi provider id → icon. Herdr's own icons are used where they
+// exist; the rest ship in this mod's icons/ folder.
+const PROVIDER_ICONS = {
+  claude: "icons/claude.svg",
+  codex: "icons/codex.svg",
+  cursor: "icons/cursor.svg",
+  copilot: "icons/copilot.svg",
+  grok: "icons/grok.svg",
+  kimi: "icons/kimi.svg",
+  agy: "icons/antigravity.svg",
+  opencode: "icons/opencode.svg",
+  "opencode-go": "icons/opencode.svg",
+  commandcode: "icons/command-code.svg",
+  muse: "icons/muse.svg",
+  gemini: "icons/gemini.svg",
+  zai: "mods/status-quota/icons/zai.svg",
+  deepseek: "mods/status-quota/icons/deepseek.svg",
+  openrouter: "mods/status-quota/icons/openrouter.svg",
+  minimax: "mods/status-quota/icons/minimax.svg",
+  alibaba: "mods/status-quota/icons/alibaba.svg",
+  elevenlabs: "mods/status-quota/icons/elevenlabs.svg",
+  mimo: "mods/status-quota/icons/mimo.svg",
+};
 
 // The app's PATH often lacks version managers (mise, Homebrew-only login
 // shells), so try the usual install prefixes as well.
@@ -238,6 +262,7 @@ export default class StatusQuota extends View {
   chip(t, row) {
     const { p, percent, reset } = row;
     const risk = this.toneColor(t, this.providerPaceTone(p));
+    const icon = PROVIDER_ICONS[p.name];
     const when = reset ? formatReset(reset.at, this.now) : "";
     const fill = Math.max(0, Math.min(100, percent));
     const body = h_flex().id(`quota-${p.name}`).relative().flex_none().items_center()
@@ -245,6 +270,7 @@ export default class StatusQuota extends View {
       .on_click(() => this.openQuota())
       .child(div().absolute().inset_0().bg(t.surface).opacity(0.5))
       .child(div().absolute().top(0).bottom(0).left(0).w(`${fill}%`).bg(risk).opacity(0.3))
+      .when(!!icon, (el) => el.child(svg(icon).size(11).flex_none().text_color(t.muted)))
       .child(div().text_color(t.muted).child(p.name))
       .child(div().text_color(risk).child(`${percent}%`))
       .when(!!when, (el) => el.child(div().text_color(t.dim).child(`· ${when}`)));
@@ -276,6 +302,7 @@ export default class StatusQuota extends View {
   card(t, row) {
     const { p, percent, label, reset } = row;
     const risk = this.toneColor(t, this.windowPaceTone(row.win));
+    const icon = PROVIDER_ICONS[p.name];
     const proj = this.projection(p, row.win);
     const when = reset ? formatReset(reset.at, this.now) : "";
     const resetClock = reset ? clockText(reset.at, this.now) : "";
@@ -292,6 +319,7 @@ export default class StatusQuota extends View {
       : "";
     return v_flex().w(262).p(12).gap(7).bg(t.popover).border_1().border_color(t.border).rounded(10)
       .child(h_flex().gap(6).items_center()
+        .when(!!icon, (el) => el.child(svg(icon).size(13).flex_none().text_color(t.muted)))
         .child(div().text_size(13).font_semibold().text_color(t.foreground).child(p.name))
         .when(!!p.plan, (el) => el.child(div().text_size(11).text_color(t.dim).child(p.plan)))
         .child(div().flex_1())
@@ -329,7 +357,8 @@ export default class StatusQuota extends View {
       .map((p) => this.chipData(p))
       .filter(Boolean)
       .sort((a, b) => a.percent - b.percent || a.p.name.localeCompare(b.p.name));
-    const chipWidth = (r) => 70 + r.p.name.length * 6.6 + (r.reset ? 54 : 0) + 12;
+    const chipWidth = (r) => 70 + r.p.name.length * 6.6 + (r.reset ? 54 : 0)
+      + (PROVIDER_ICONS[r.p.name] ? 15 : 0) + 12;
     const shown = [];
     let used = 0;
     for (const row of rows) {

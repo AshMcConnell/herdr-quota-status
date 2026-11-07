@@ -24,7 +24,9 @@ clipped:
 
 - A `surface` background at 50 % opacity, then the same box filled from the
   left to the remaining percentage in the pace tone at 30 % opacity.
-- Text: provider name in `muted`, the percentage in the pace tone, then
+- Text: an 11 px provider icon (Herdr's own `icons/…` where it has one,
+  otherwise this mod's `icons/`), the name in `muted`, the percentage in
+  the pace tone, then
   `· 4h 52m` in `dim` when the window has a reset time. Pace tone:
   `blocked` when quota-axi's window pace is `ahead` (spending runs ahead of
   the clock, so the window empties before it refills), `done` for
@@ -39,9 +41,9 @@ clipped:
 - Click opens the Quota pane as a tab (`run("tab.new", { name: "Quota",
   mod: "quota" })`); the trailing `+N` chip does the same and has a
   "N more providers" tooltip.
-- Up to five chips. Count what fits from the row's leftover width, using an
+- Up to ten chips. Count what fits from the row's leftover width, using an
   estimate per chip (70 px + 6.6 px per name character + 54 px with a
-  reset), leaving 28 px for `+N`.
+  reset + 15 px with an icon), leaving 28 px for `+N`.
 
 **Which window.** The provider's 5-hour window: `kind === "session"`, an id
 of `rolling` (OpenCode Go's plan-declared 5-hour cap), or an id/label
@@ -121,6 +123,7 @@ mods/status-quota/
   main.js          the View: fetch, session window, chips, card, projection
   quota-model.js   copied from herdr-quota (MIT)
   mod.json         { "place": "none", "cloned_from": … }
+  icons/           provider marks Herdr does not ship (CC0, see icons/LICENSE)
 ```
 
 `jsconfig.json` and `gpui-kit.d.ts` are written by the app; both are
