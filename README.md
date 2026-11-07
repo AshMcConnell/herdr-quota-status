@@ -35,11 +35,14 @@ without herdr-quota the chips still work, but clicking one does nothing.
 
 ## What it shows
 
-- **Chips**, in the 28 px status row: name in `muted`, the percentage in
-  `done` / `ansi3` / `blocked` (60 % and up / 30 % and up / below), then
-  `· 4h 52m` in `dim` while that window has a reset time. The chip sits on a
-  half-`surface` track filled from the left at 25 % opacity for what is
-  left. Up to five fit, emptiest first; `+N` covers the rest.
+- **Chips**, in the 28 px status row: name in `muted`, the percentage, then
+  `· 4h 52m` in `dim` while that window has a reset time. The chip's fill
+  and percentage take their colour from whether the window should last to
+  its reset: `blocked` when spending runs ahead of the clock (it empties
+  before it refills), `done` when on pace or behind, `muted` when there is
+  no pace reading (untouched or stale). The fill still spans what is left,
+  on a half-`surface` track. Up to five fit, emptiest first; `+N`
+  covers the rest.
 - **Which window**: the provider's 5-hour window — a `session` one, or a
   `rolling` one for OpenCode Go's plan-declared cap. A provider with
   neither falls back to its tightest window.

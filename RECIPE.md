@@ -23,10 +23,13 @@ Flex none, 19 px tall, 6 px horizontal padding, 4 px gap, 5 px radius,
 clipped:
 
 - A `surface` background at 50 % opacity, then the same box filled from the
-  left to the remaining percentage in the provider's tone at 25 % opacity.
-- Text: provider name in `muted`, the percentage in the tone, then
-  `· 4h 52m` in `dim` when the window has a reset time. Tone: `done` at
-  60 % and up, `ansi3` at 30–59 %, `blocked` below.
+  left to the remaining percentage in the pace tone at 30 % opacity.
+- Text: provider name in `muted`, the percentage in the pace tone, then
+  `· 4h 52m` in `dim` when the window has a reset time. Pace tone:
+  `blocked` when quota-axi's window pace is `ahead` (spending runs ahead of
+  the clock, so the window empties before it refills), `done` for
+  `on_pace` and `behind`, `muted` when pace is unknown. The fill width is
+  the amount left; only the colour is about pace.
 - Click opens the Quota pane as a tab (`run("tab.new", { name: "Quota",
   mod: "quota" })`); the trailing `+N` chip does the same and has a
   "N more providers" tooltip.
@@ -54,10 +57,10 @@ Open delay 220 ms, close delay 180 ms. Panel: 262 px wide, 12 px padding,
 Top to bottom:
 
 1. Name in 13 px semibold `foreground`, plan in 11 px `dim`, the big
-   percentage in 13 px semibold, tone coloured.
+   percentage in 13 px semibold, pace tone.
 2. `<window label> window` in 11 px `muted`.
-3. A 5 px `surface` bar with the remaining percentage filled in the tone;
-   no clipping, so the pace tick can stand proud.
+3. A 5 px `surface` bar with the remaining percentage filled in the pace
+   tone; no clipping, so the pace tick can stand proud.
 4. `5-hour refill in 4h 52m · 01:39` (or `reset in …` for a fallback
    window) in 11.5 px `muted`.
 5. The projection in 11.5 px — `ansi3` when it runs out, else `muted`:
@@ -71,7 +74,9 @@ Top to bottom:
    the burn is 0 or the window is empty.
 7. A 1 px `border` divider, then up to three other windows (`kind !==
    "session"`, weekly first): label in 10.5 px `dim`, percentage in 11.5 px
-   tone on the right, `· resets in 6d 10h` in 10.5 px `dim`, and a 4 px bar.
+   in the amount tone (`done` at 60 % and up, `ansi3` at 30–59 %, `blocked`
+   below) on the right, `· resets in 6d 10h` in 10.5 px `dim`, and a 4 px
+   bar.
 8. No footer text; the chip is the click target.
 
 ## Pace tick

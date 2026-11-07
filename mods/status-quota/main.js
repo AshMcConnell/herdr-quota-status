@@ -115,6 +115,19 @@ export default class StatusQuota extends View {
     return { ok: t.done, warn: t.ansi3, low: t.blocked }[tone] ?? t.muted;
   }
 
+  /** Whether this window should last to its reset. quota-axi's pace says
+   *  "ahead" when spending runs ahead of the clock — the case that empties
+   *  the window before it refills — and "behind" when there is surplus.
+   *  "on_pace" lands within a point of even, so it is not a warning. */
+  paceTone(win) {
+    switch (win?.pace?.status) {
+      case "ahead": return "low";
+      case "on_pace":
+      case "behind": return "ok";
+      default: return "none";
+    }
+  }
+
   /** Where the bar would reach at an even pace: the fraction of the window
    *  still left. quota-axi's reserve is percent remaining minus time
    *  remaining percent, so subtracting it puts the mark back on the clock.
@@ -202,20 +215,21 @@ export default class StatusQuota extends View {
     return out;
   }
 
-  /** One provider: the 5-hour percent and refill on a tinted bar that
-   *  fills with what is left, and a hover card with the projection. */
+  /** One provider: the 5-hour percent and refill on a bar whose colour
+   *  says whether it should last to the reset, and a hover card with the
+   *  projection. */
   chip(t, row) {
     const { p, percent, reset } = row;
-    const tone = this.toneColor(t, remainingTone(percent));
+    const risk = this.toneColor(t, this.paceTone(row.win));
     const when = reset ? formatReset(reset.at, this.now) : "";
     const fill = Math.max(0, Math.min(100, percent));
     const body = h_flex().id(`quota-${p.name}`).relative().flex_none().items_center()
       .h(19).px(6).gap(4).rounded(5).overflow_hidden().cursor_pointer()
       .on_click(() => this.openQuota())
       .child(div().absolute().inset_0().bg(t.surface).opacity(0.5))
-      .child(div().absolute().top(0).bottom(0).left(0).w(`${fill}%`).bg(tone).opacity(0.25))
+      .child(div().absolute().top(0).bottom(0).left(0).w(`${fill}%`).bg(risk).opacity(0.3))
       .child(div().text_color(t.muted).child(p.name))
-      .child(div().text_color(tone).child(`${percent}%`))
+      .child(div().text_color(risk).child(`${percent}%`))
       .when(!!when, (el) => el.child(div().text_color(t.dim).child(`· ${when}`)));
     return HoverCard.new(`quota-card-${p.name}`).open_delay(220).close_delay(180)
       .trigger(body)
@@ -244,7 +258,7 @@ export default class StatusQuota extends View {
    *  chip cannot hold. */
   card(t, row) {
     const { p, percent, label, reset } = row;
-    const tone = this.toneColor(t, remainingTone(percent));
+    const risk = this.toneColor(t, this.paceTone(row.win));
     const proj = this.projection(p, row.win);
     const when = reset ? formatReset(reset.at, this.now) : "";
     const resetClock = reset ? clockText(reset.at, this.now) : "";
@@ -264,10 +278,10 @@ export default class StatusQuota extends View {
         .child(div().text_size(13).font_semibold().text_color(t.foreground).child(p.name))
         .when(!!p.plan, (el) => el.child(div().text_size(11).text_color(t.dim).child(p.plan)))
         .child(div().flex_1())
-        .child(div().text_size(13).font_semibold().text_color(tone).child(`${percent}%`)))
+        .child(div().text_size(13).font_semibold().text_color(risk).child(`${percent}%`)))
       .child(div().text_size(11).text_color(t.muted).child(`${label} window`))
       .child(div().relative().h(5).rounded(3).bg(t.surface)
-        .child(div().absolute().top(0).bottom(0).left(0).rounded(3).bg(tone).w(`${fill}%`))
+        .child(div().absolute().top(0).bottom(0).left(0).rounded(3).bg(risk).w(`${fill}%`))
         .when(mark !== null, (el) => el.child(this.tick(t, mark, -3, -3))))
       .when(!!when, (el) => el.child(div().text_size(11.5).text_color(t.muted)
         .child(`${reset.session ? "5-hour refill" : "reset"} in ${when}${resetClock ? ` · ${resetClock}` : ""}`)))
