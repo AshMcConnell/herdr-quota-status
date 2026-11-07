@@ -1,0 +1,10 @@
+This mod is derived from Herdr's shipped `workspace-status` mod, part of
+Herdr (https://herdr.dev), which is licensed under the Apache License,
+Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0).
+
+`mods/status-quota/quota-model.js` is from herdr-quota
+(https://github.com/sjennings/herdr-quota), Copyright (c) 2026 sjennings,
+licensed under the MIT License.
+
+Both are used under their respective terms. See LICENSE for this
+repository's own MIT grant.
