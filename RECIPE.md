@@ -28,7 +28,10 @@ clipped:
   otherwise this mod's `icons/`), a three-letter code in `muted` from a
   provider→label map (`CLA`, `ZAI`, `OCG`, `CMD`), falling back to the
   first three letters uppercased, the percentage in the pace tone, then
-  `· 4h 52m` in `dim` when the window has a reset time. Pace tone:
+  `· 4h 52m` in `dim` when the window has a reset time. Icons are
+  `image()` so brand colours survive, except single-colour marks — cursor,
+  copilot, grok, gemini, opencode, opencode-go, commandcode, muse — which
+  use `svg()` tinted `muted`. Pace tone:
   `blocked` when quota-axi's window pace is `ahead` (spending runs ahead of
   the clock, so the window empties before it refills), `done` for
   `on_pace` and `behind`, `muted` when pace is unknown. The fill width is

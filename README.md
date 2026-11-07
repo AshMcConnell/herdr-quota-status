@@ -37,7 +37,9 @@ without herdr-quota the chips still work, but clicking one does nothing.
 
 - **Chips**, in the 28 px status row: an 11 px provider icon and a
   three-letter code (`CLA`, `ZAI`, `OCG`) in `muted`, the percentage, then
-  `· 4h 52m` in `dim` while that window has a reset time. The chip's fill
+  `· 4h 52m` in `dim` while that window has a reset time. Icons keep their
+  brand colours where the provider has them; single-colour marks are
+  tinted like the name. The chip's fill
   and percentage are coloured by whether the **provider** should last to
   its next reset: `blocked` when any window — 5-hour, weekly or monthly —
   is spending ahead of its clock, `done` when every measured window is on

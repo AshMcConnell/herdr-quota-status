@@ -1,4 +1,4 @@
-import { View, div, svg } from "gpui-kit";
+import { View, div, image, svg } from "gpui-kit";
 import { h_flex, v_flex, HoverCard } from "gpui-base";
 import { spaces, agents, theme, run, window, keys, exec, home } from "herdr";
 import { summarize, formatReset } from "./quota-model.js";
@@ -64,6 +64,20 @@ const PROVIDER_ICONS = {
   elevenlabs: "mods/status-quota/icons/elevenlabs.svg",
   mimo: "mods/status-quota/icons/mimo.svg",
 };
+
+// Provider ids whose mark is a single-colour glyph to tint with the text
+// colour. The rest keep their own colours, following Herdr's tint flags
+// for its agents.
+const PROVIDER_TINT = new Set([
+  "cursor",
+  "copilot",
+  "grok",
+  "gemini",
+  "opencode",
+  "opencode-go",
+  "commandcode",
+  "muse",
+]);
 
 // The app's PATH often lacks version managers (mise, Homebrew-only login
 // shells), so try the usual install prefixes as well.
@@ -162,6 +176,12 @@ export default class StatusQuota extends View {
 
   toneColor(t, tone) {
     return { ok: t.done, warn: t.ansi3, low: t.blocked }[tone] ?? t.muted;
+  }
+
+  providerIcon(t, name, icon, size) {
+    return PROVIDER_TINT.has(name)
+      ? svg(icon).size(size).flex_none().text_color(t.muted)
+      : image(icon).size(size).flex_none();
   }
 
   /** Whether one window should last to its reset. quota-axi's pace says
@@ -296,7 +316,7 @@ export default class StatusQuota extends View {
       .on_click(() => this.openQuota())
       .child(div().absolute().inset_0().bg(t.surface).opacity(0.5))
       .child(div().absolute().top(0).bottom(0).left(0).w(`${fill}%`).bg(risk).opacity(0.3))
-      .when(!!icon, (el) => el.child(svg(icon).size(11).flex_none().text_color(t.muted)))
+      .when(!!icon, (el) => el.child(this.providerIcon(t, p.name, icon, 11)))
       .child(div().text_color(t.muted).child(label))
       .child(div().text_color(risk).child(`${percent}%`))
       .when(!!when, (el) => el.child(div().text_color(t.dim).child(`· ${when}`)));
@@ -345,7 +365,7 @@ export default class StatusQuota extends View {
       : "";
     return v_flex().w(262).p(12).gap(7).bg(t.popover).border_1().border_color(t.border).rounded(10)
       .child(h_flex().gap(6).items_center()
-        .when(!!icon, (el) => el.child(svg(icon).size(13).flex_none().text_color(t.muted)))
+        .when(!!icon, (el) => el.child(this.providerIcon(t, p.name, icon, 13)))
         .child(div().text_size(13).font_semibold().text_color(t.foreground).child(p.name))
         .when(!!p.plan, (el) => el.child(div().text_size(11).text_color(t.dim).child(p.plan)))
         .child(div().flex_1())
