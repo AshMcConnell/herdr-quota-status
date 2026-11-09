@@ -1,5 +1,7 @@
 # Quota status bar
 
+![Quota card](preview.png)
+
 A Herdr mod that replaces the app's status bar with a quota strip:
 one chip per live provider for its 5-hour window, and a hover card with the
 refill time, quota-axi's run-out projection, the balance at reset, a pace
