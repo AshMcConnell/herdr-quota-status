@@ -11,8 +11,11 @@ import { summarize, formatReset } from "./quota-model.js";
 const FETCH_MS = 5 * 60_000;
 const TICK_MS = 60_000;
 const MAX_AGE = "4m";
+const FRESH_MAX_AGE = "0"; // a manual refresh never reuses a cached reading
 const MAX_CHIPS = 10;
 const CARD_GAP = 20; // px of transparent space under the hover card
+const CARD_OPEN_MS = 90; // quick enough to follow the pointer between chips
+const CARD_CLOSE_MS = 60;
 
 const SPAWN_FAILURE = /could not be started|not found|no such|cannot start|permission denied|ENOENT|EACCES/i;
 
@@ -126,6 +129,7 @@ export default class StatusQuota extends View {
     this.view = null;
     this.state = { name: "loading" };
     this.fetching = false;
+    this.refreshQueued = false;
     this.leftover = 0;
     this.fetch(cx);
     cx.timer.every(FETCH_MS, (cx) => this.fetch(cx));
@@ -136,7 +140,7 @@ export default class StatusQuota extends View {
     });
   }
 
-  fetch(cx) {
+  fetch(cx, maxAge = MAX_AGE) {
     if (this.fetching) return;
     this.fetching = true;
     cx.spawn(async (cx) => {
@@ -144,7 +148,7 @@ export default class StatusQuota extends View {
       let failure = null;
       for (const bin of QUOTA_AXI_CANDIDATES()) {
         try {
-          r = await exec(bin, ["--json", "--no-credential-refresh", "--max-age", MAX_AGE]);
+          r = await exec(bin, ["--json", "--no-credential-refresh", "--max-age", maxAge]);
           break;
         } catch (e) {
           const message = String(e?.message ?? e);
@@ -170,8 +174,26 @@ export default class StatusQuota extends View {
         this.state = { name: "error", message: `quota-axi output was not JSON: ${e?.message ?? e}` };
       }
       this.fetching = false;
+      // A press during an in-flight fetch still gets its fresh read: queue
+      // one behind it instead of dropping the press.
+      if (this.refreshQueued) {
+        this.refreshQueued = false;
+        this.fetch(cx, FRESH_MAX_AGE);
+      }
       cx.notify();
     });
+  }
+
+  /** The card's refresh button: asks quota-axi to read every vendor now,
+   *  skipping the cached reading a scheduled fetch may reuse. */
+  refresh(cx) {
+    if (this.fetching) {
+      this.refreshQueued = true;
+      cx.notify();
+      return;
+    }
+    this.fetch(cx, FRESH_MAX_AGE);
+    cx.notify();
   }
 
   toneColor(t, tone) {
@@ -182,6 +204,20 @@ export default class StatusQuota extends View {
     return PROVIDER_TINT.has(name)
       ? svg(icon).size(size).flex_none().text_color(t.muted)
       : image(icon).size(size).flex_none();
+  }
+
+  /** The card's refresh control: a small circular arrow beside the name,
+   *  swapping to Herdr's spinner while a read is in flight. */
+  refreshButton(t, name) {
+    const busy = this.fetching;
+    return h_flex().id(`quota-refresh-${name}`).flex_none().size(16)
+      .items_center().justify_center().rounded(4).cursor_pointer()
+      .tooltip(busy ? "Refreshing quota…" : "Refresh quota")
+      .hover((s) => s.bg(t.hover))
+      .on_click((_event, cx) => this.refresh(cx))
+      .child(busy
+        ? svg("mods/workspace-chrome/spinner.svg").size(11).text_color(t.working).spin(900)
+        : svg("mods/status-quota/icons/refresh.svg").size(11).text_color(t.dim));
   }
 
   /** Whether one window should last to its reset. quota-axi's pace says
@@ -320,7 +356,7 @@ export default class StatusQuota extends View {
       .child(div().text_color(t.muted).child(label))
       .child(div().text_color(risk).child(`${percent}%`))
       .when(!!when, (el) => el.child(div().text_color(t.dim).child(`· ${when}`)));
-    return HoverCard.new(`quota-card-${p.name}`).open_delay(220).close_delay(180)
+    return HoverCard.new(`quota-card-${p.name}`).open_delay(CARD_OPEN_MS).close_delay(CARD_CLOSE_MS)
       .trigger(body)
       .content(v_flex().pb(CARD_GAP).child(this.card(t, row)));
   }
@@ -371,6 +407,7 @@ export default class StatusQuota extends View {
       .child(h_flex().gap(6).items_center()
         .when(!!icon, (el) => el.child(this.providerIcon(t, p.name, icon, 13)))
         .child(div().text_size(13).font_semibold().text_color(t.foreground).child(p.name))
+        .child(this.refreshButton(t, p.name))
         .when(!!p.plan, (el) => el.child(div().text_size(11).text_color(t.dim).child(p.plan)))
         .child(div().flex_1())
         .child(div().text_size(13).font_semibold().text_color(risk).child(`${percent}%`)))

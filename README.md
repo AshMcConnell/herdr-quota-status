@@ -17,11 +17,26 @@ branch, agent count and palette hint stay exactly where they were.
 
 ## Install
 
-Needs Herdr (herdr-app) and quota-axi on `PATH` (`quota-axi --help` works).
+Needs Herdr (herdr-app) and the
+[quota-axi fork](https://github.com/AshMcConnell/quota-axi) on `PATH`
+(`quota-axi --help` works). Stock quota-axi 0.1.69 has no Command Code
+monthly window, so install the fork:
+
+```sh
+git clone https://github.com/AshMcConnell/quota-axi
+cd quota-axi && pnpm install && pnpm build && npm link
+```
+
+An update that reinstalls upstream quota-axi replaces the link; re-run
+`npm link` from the fork afterwards.
 
 Copy `mods/status-quota/` into `~/.config/herdr-app/mods/`, or ask your agent:
 
 > Read ~/.config/herdr-app/AGENTS.md, then add this mod: herdr.dev/mods/AshMcConnell/herdr-quota-status
+
+Keep the copied folder real: a symlink to this checkout outside
+`~/.config/herdr-app` loads, but its icons fail to resolve and saves there
+do not hot-reload.
 
 Then point the status block in the layout you use at it:
 
@@ -50,13 +65,14 @@ without herdr-quota the chips still work, but clicking one does nothing.
 - **Which window**: the provider's 5-hour window — a `session` one, or a
   `rolling` one for OpenCode Go's plan-declared cap. A provider with
   neither falls back to its tightest window.
-- **Hover card**: name, plan and the big percentage; a bar; the refill
-  countdown with its clock time; the run-out projection (`runs out in
-  ~2h 33m · 23:22 · early estimate`, `lasts to reset`, or `empty now`);
+- **Hover card**: name, a refresh button, plan and the big percentage; a bar;
+  the refill countdown with its clock time; the run-out projection (`runs out
+  in ~2h 33m · 23:22 · early estimate`, `lasts to reset`, or `empty now`);
   `~85 % over at reset` or `~87 % left at reset`; then up to three weekly
   and monthly windows, each with its own bar and reset. When the provider
   reports a credit balance (Command Code), a `monthly credits` row shows
-  what is left.
+  what is left. Cards follow the pointer between chips in under a tenth of
+  a second.
 - **Signed-out providers** are left out, since they have no percentage.
 - **quota-axi missing or failing**: a single red `quota read failed` chip;
   hover shows the error.
@@ -68,17 +84,25 @@ even burn. quota-axi publishes `reservePercentPoints = percentRemaining −
 timeRemainingPercent`, so the tick sits at `percentRemaining − reserve`,
 clamped to 0–99.
 
-- Tick left of the fill's end: burning faster than the clock.
-- Tick right of it: under pace.
+- Tick left of the fill's end: under pace — the fill reaches further than
+  the clock would.
+- Tick right of it: burning faster than the clock.
 - Tick at the end: exactly on pace.
 
 ## Notes
 
 - Reads quota only: `quota-axi --json --no-credential-refresh --max-age 4m`
-  every five minutes, recounted every minute. It never mints, renews or
-  delegates a credential. The card's **Refresh** lives in the Quota pane.
+  every five minutes, recounted every minute. The card's **Refresh** button
+  reads again right away (`--max-age 0`), so it never shows quota-axi's
+  cached copy; a press during a read queues one behind it. It never mints,
+  renews or delegates a credential. The Quota pane has its own refresh.
 - `quota-model.js` is a copy of herdr-quota's `mods/quota/model.js`; Herdr
   mods cannot import each other, so keep the two in step.
+- Command Code's monthly bar comes from quota-axi's `monthly` window.
+  Use the [AshMcConnell/quota-axi fork](https://github.com/AshMcConnell/quota-axi):
+  it reads the plan's subscription and usage summary. Stock quota-axi
+  0.1.69 reports only its 5-hour and weekly windows and misses the nested
+  credit balance.
 - Uses `quota-axi` schemaVersion 5; unknown statuses read as unavailable.
 
 ## Built on

@@ -63,13 +63,16 @@ time; never borrow another window's reset.
 A `HoverCard` from `gpui-base`: trigger is the chip, content is a
 transparent `v_flex` with 20 px bottom padding wrapping the panel, so the
 panel sits 20 px above the bar and the gap stays inside the hover region.
-Open delay 220 ms, close delay 180 ms. Panel: 262 px wide, 12 px padding,
+Open delay 90 ms, close delay 60 ms. Panel: 262 px wide, 12 px padding,
 7 px gaps, `popover` background, 1 px `border`, 10 px radius.
 
 Top to bottom:
 
-1. Name in 13 px semibold `foreground`, plan in 11 px `dim`, the big
-   percentage in 13 px semibold, in that window's own pace tone.
+1. Name in 13 px semibold `foreground`, a 16 px refresh button, plan in
+   11 px `dim`, the big percentage in 13 px semibold, in that window's own
+   pace tone. The refresh button reads again with `--max-age 0`, swaps to
+   Herdr's spinner while a read runs, and queues a second read if pressed
+   during one.
 2. `<window label> window` in 11 px `muted`.
 3. A 5 px `surface` bar with the remaining percentage filled in the pace
    tone; no clipping, so the pace tick can stand proud.
@@ -92,8 +95,9 @@ Top to bottom:
 8. When the provider reports a credit balance (`credits`), a
    `monthly credits` row (or `balance` for a USD balance) with the
    remaining amount on the right, in 10.5 / 11.5 px. Command Code is the
-   case here: quota-axi reports its 5-hour and weekly windows only, so the
-   monthly credit balance is the monthly figure.
+   case here: its monthly window comes from the plan's included credit
+   pool, while this row keeps the absolute balance (including purchased
+   and free credits).
 9. No footer text; the chip is the click target.
 
 ## Pace tick
@@ -107,17 +111,27 @@ opacity, inset −3 px top and bottom (it stands proud of the bar), rounded
   timeRemainingPercent`, so subtracting it recovers the fraction of the
   window still on the clock — where the bar would reach at an even burn
   when the bar shows what is left.
-- A tick left of the fill's end means faster than the clock; right means
-  under pace. No pace data (stale or unmeasured), no tick.
+- A tick left of the fill's end means under pace (the fill reaches further
+  than the clock); right means burning faster than the clock. No pace data
+  (stale or unmeasured), no tick.
 
 ## Data
 
 Poll `quota-axi --json --no-credential-refresh --max-age 4m` every five
 minutes (`cx.timer.every`), and recount every minute without re-reading.
-Resolve `quota-axi` by trying `PATH` first, then
+The card's refresh button polls with `--max-age 0` and queues a press made
+during an in-flight read. Resolve `quota-axi` by trying `PATH` first, then
 `~/.local/share/mise/shims/quota-axi`, `~/.local/bin/quota-axi`,
 `/opt/homebrew/bin/quota-axi`, `/usr/local/bin/quota-axi`; only a failure
 to start moves to the next candidate.
+
+Command Code's monthly window comes from the
+[quota-axi fork](https://github.com/AshMcConnell/quota-axi): it reads
+`/alpha/billing/subscriptions` for the plan and period, and
+`/alpha/usage/summary` for monthly credits spent. Spent plus remaining is
+the plan pool, so the percentage needs no plan table; a small table is a
+fallback for a failed summary read. Stock quota-axi 0.1.69 omits this
+window and misses the nested credit balance.
 
 `quota-model.js` is a copy of herdr-quota's `mods/quota/model.js` (pure:
 `summarize`, `remainingTone`, `formatReset`), because Herdr mods cannot
@@ -134,6 +148,9 @@ mods/status-quota/
   mod.json         { "place": "none", "cloned_from": … }
   icons/           provider marks Herdr does not ship (CC0, see icons/LICENSE)
 ```
+
+The [quota-axi fork](https://github.com/AshMcConnell/quota-axi) is external:
+install it on `PATH` from its checkout (`pnpm build && npm link`).
 
 `jsconfig.json` and `gpui-kit.d.ts` are written by the app; both are
 ignored here.
