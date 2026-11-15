@@ -73,7 +73,12 @@ without herdr-quota the chips still work, but clicking one does nothing.
   reports a credit balance (Command Code), a `monthly credits` row shows
   what is left. Cards follow the pointer between chips in under a tenth of
   a second.
-- **Signed-out providers** are left out, since they have no percentage.
+- **Set up but unreadable** providers keep a dimmed chip instead of
+  vanishing: the icon, the code, then `—` in `warn`, with the reason in the
+  tooltip (`keychain prompt required · run quota-axi --provider claude
+  --allow-keychain-prompt`). Hovering opens a card saying `no reading`, the
+  reason and that command, with the usual refresh button. Providers
+  quota-axi marks `notSetUp` (never signed in) stay hidden.
 - **quota-axi missing or failing**: a single red `quota read failed` chip;
   hover shows the error.
 
@@ -98,11 +103,28 @@ clamped to 0–99.
   renews or delegates a credential. The Quota pane has its own refresh.
 - `quota-model.js` is a copy of herdr-quota's `mods/quota/model.js`; Herdr
   mods cannot import each other, so keep the two in step.
+- **Weekend-aware pace** comes from the fork, not this mod: add a provider
+  to `pace.weekdaysOnly` in `~/.config/quota-axi/config.json`, e.g.
+  `{ "pace": { "weekdaysOnly": ["claude"] } }`. quota-axi then measures
+  that provider's elapsed and remaining cycle time on Monday–Friday local
+  time, so an idle weekend no longer reads as surplus headroom on Monday
+  and the run-out projection moves to the working week. The chip colour,
+  pace tick, reset balance and projection follow with no change here.
+- **Claude's chip vanishes after a cache clean** — reading Claude's keychain
+  entry needs a one-time grant, remembered as
+  `~/.cache/quota-axi/claude-keychain-access-granted-*`. Anything that
+  empties `~/.cache` deletes it, and quota-axi then refuses the keychain
+  unless given `--allow-keychain-prompt` — which the mod never passes, so
+  the chip turns into `CLA —`. Re-grant with
+  `quota-axi --provider claude --allow-keychain-prompt` and click
+  **Always Allow** in the macOS dialog; the chip comes back on the next
+  poll, or at once with the card's refresh button.
 - Command Code's monthly bar comes from quota-axi's `monthly` window.
   Use the [AshMcConnell/quota-axi fork](https://github.com/AshMcConnell/quota-axi):
   it reads the plan's subscription and usage summary. Stock quota-axi
   0.1.69 reports only its 5-hour and weekly windows and misses the nested
-  credit balance.
+  credit balance. The fork also counts a Codex CLI that is not installed as
+  not set up, so an uninstalled Codex leaves no dead chip behind.
 - Uses `quota-axi` schemaVersion 5; unknown statuses read as unavailable.
 
 ## Built on

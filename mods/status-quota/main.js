@@ -1,7 +1,7 @@
 import { View, div, image, svg } from "gpui-kit";
 import { h_flex, v_flex, HoverCard } from "gpui-base";
 import { spaces, agents, theme, run, window, keys, exec, home } from "herdr";
-import { summarize, formatReset } from "./quota-model.js";
+import { classifyProvider, summarize, formatReset } from "./quota-model.js";
 
 // The status bar, plus each provider's 5-hour window: a tinted chip whose
 // fill tracks the percentage left, and a hover card with the refill time,
@@ -309,6 +309,41 @@ export default class StatusQuota extends View {
     };
   }
 
+  /** "keychain prompt required", "Codex access token expired": quota-axi's
+   *  error id or sentence, with underscores spaced out for reading. */
+  brokenReason(p) {
+    const error = p?.state?.error ?? p?.state?.reason ?? "quota unavailable";
+    return String(error).replaceAll("_", " ");
+  }
+
+  /** What the user can do about it: quota-axi's own remedy command when it
+   *  gives one, else the grant its keychain errors imply. Empty when there
+   *  is nothing to suggest. */
+  remedyFor(p) {
+    const given = p?.state?.remedyCommand;
+    if (typeof given === "string" && given !== "") return given;
+    const error = p?.state?.error ?? "";
+    if (/^keychain_/.test(error)) return `quota-axi --provider ${p.provider} --allow-keychain-prompt`;
+    return "";
+  }
+
+  /** Providers the user has set up that quota-axi could not read: Claude
+   *  after its keychain grant lapsed, a Codex token that expired. They keep
+   *  a dimmed chip instead of vanishing, so a broken credential never reads
+   *  as "no such provider". `notSetUp` marks the ones never signed in, and
+   *  those stay out of the bar. */
+  brokenProviders() {
+    const list = Array.isArray(this.raw?.providers) ? this.raw.providers : [];
+    return list
+      .filter((p) => p?.notSetUp !== true && classifyProvider(p) === "unavailable")
+      .map((p) => ({
+        name: p.provider ?? "?",
+        reason: this.brokenReason(p),
+        remedy: this.remedyFor(p),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
   /** quota-axi's projection for this provider: when the current pace runs
    *  it dry (the scope's runway), and how much of the window is left when
    *  it resets (100 minus the window's burn multiple, the same linear
@@ -377,6 +412,42 @@ export default class StatusQuota extends View {
         .child(div().absolute().top(0).bottom(0).left(0).rounded(2).bg(tone)
           .w(`${Math.max(0, Math.min(100, w.percentRemaining))}%`))
         .when(mark !== null, (el) => el.child(this.tick(t, mark, -3, -3))));
+  }
+
+  /** One provider quota-axi could not read: its icon and code, a dash where
+   *  the percentage would be, and the reason on hover. It never claims a
+   *  window or a refill, since none was read. */
+  brokenChip(t, row) {
+    const icon = PROVIDER_ICONS[row.name];
+    const label = PROVIDER_LABELS[row.name] ?? row.name.slice(0, 3).toUpperCase();
+    const why = row.remedy ? `${row.reason} · run ${row.remedy}` : row.reason;
+    const body = h_flex().id(`quota-${row.name}`).relative().flex_none().items_center()
+      .h(19).px(6).gap(4).rounded(5).overflow_hidden().cursor_pointer()
+      .on_click(() => this.openQuota())
+      .tooltip(why)
+      .child(div().absolute().inset_0().bg(t.surface).opacity(0.5))
+      .when(!!icon, (el) => el.child(this.providerIcon(t, row.name, icon, 11)))
+      .child(div().text_color(t.dim).child(label))
+      .child(div().text_color(t.ansi3).child("—"));
+    return HoverCard.new(`quota-card-${row.name}`).open_delay(CARD_OPEN_MS).close_delay(CARD_CLOSE_MS)
+      .trigger(body)
+      .content(v_flex().pb(CARD_GAP).child(this.brokenCard(t, row)));
+  }
+
+  /** The card behind a dimmed chip: what went wrong and the command that
+   *  fixes it, with the same refresh button so a retry is one press away. */
+  brokenCard(t, row) {
+    const icon = PROVIDER_ICONS[row.name];
+    return v_flex().w(262).p(12).gap(7).bg(t.popover).border_1().border_color(t.border).rounded(10)
+      .child(h_flex().gap(6).items_center()
+        .when(!!icon, (el) => el.child(this.providerIcon(t, row.name, icon, 13)))
+        .child(div().text_size(13).font_semibold().text_color(t.foreground).child(row.name))
+        .child(this.refreshButton(t, row.name))
+        .child(div().flex_1())
+        .child(div().text_size(11.5).text_color(t.ansi3).child("no reading")))
+      .child(div().text_size(11.5).text_color(t.muted).child(row.reason))
+      .when(Boolean(row.remedy), (el) => el.child(div().text_size(11).text_color(t.dim)
+        .child(`run ${row.remedy}`)));
   }
 
   /** The hover card: a bigger, styled panel with the numbers the one-line
@@ -466,6 +537,14 @@ export default class StatusQuota extends View {
         .on_click(() => this.openQuota())
         .tooltip(`${more} more provider${more === 1 ? "" : "s"}`)
         .child(`+${more}`));
+    }
+    // Providers that are set up but unreadable go last, so they never push a
+    // live chip out, and are dropped first when the row is full.
+    if (more > 0) used += 28; // the "+N" they must clear sits before them
+    for (const row of this.brokenProviders()) {
+      if (this.leftover > 0 && used + 60 > this.leftover) break;
+      chips.push(this.brokenChip(t, row));
+      used += 60;
     }
     return chips;
   }

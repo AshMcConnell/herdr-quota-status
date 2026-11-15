@@ -50,6 +50,16 @@ clipped:
 - Up to ten chips. Count what fits from the row's leftover width, using an
   estimate per chip (70 px + about 20 px for the code + 54 px with a
   reset + 15 px with an icon), leaving 28 px for `+N`.
+- A provider the user has set up but quota-axi could not read keeps a
+  chip rather than disappearing: the same box and 50 % `surface` with no
+  fill, the icon, the code in `dim`, then `—` in `ansi3`, and a tooltip
+  `<reason> · run <remedy>` (`keychain prompt required · run quota-axi
+  --provider claude --allow-keychain-prompt`). Its card is the usual 262 px
+  panel with the name, a refresh button, `no reading` in `ansi3`, the
+  reason in `muted` and the remedy command in `dim`. These chips follow the
+  live ones and the `+N`, so they never push a reading out, and they are
+  the first dropped when the row is full. Providers quota-axi marks
+  `notSetUp` — never signed in — are still left out entirely.
 
 **Which window.** The provider's 5-hour window: `kind === "session"`, an id
 of `rolling` (OpenCode Go's plan-declared 5-hour cap), or an id/label
@@ -116,6 +126,12 @@ opacity, inset −3 px top and bottom (it stands proud of the bar), rounded
 - A tick left of the fill's end means under pace (the fill reaches further
   than the clock); right means burning faster than the clock. No pace data
   (stale or unmeasured), no tick.
+- The clock itself can exclude weekends: with a provider listed in
+  `pace.weekdaysOnly` in `~/.config/quota-axi/config.json`, quota-axi
+  reports `timeRemainingPercent`, `reservePercentPoints` and
+  `burnMultiple` on Monday–Friday local time and converts
+  `projectedExhaustedAt` back to wall-clock time. The tick and projection
+  need no code of their own for this; they follow the numbers.
 
 ## Data
 
@@ -140,6 +156,13 @@ window and misses the nested credit balance.
 import each other's folders. The mod adds `formatSpan` (seconds to
 `2h 33m`), `clockText` (local `23:22`, weekday when not today) and
 `paceMark`.
+
+The dimmed chip needs `notSetUp`, which `summarize` folds away with every
+other unreadable provider, so `brokenProviders()` reads `this.raw.providers`
+itself (`notSetUp !== true` plus `classifyProvider(p) === "unavailable"`)
+and keeps the two model copies identical. It also reads `state.error` and
+`state.remedyCommand` there, falling back to
+`quota-axi --provider <id> --allow-keychain-prompt` for `keychain_*`.
 
 ## Files
 
@@ -187,7 +210,10 @@ The mod never docks itself. A layout's status block must name it:
 - The bar shows one chip per live provider, emptiest first, with the
   5-hour percentage and refill time; hovering opens the card with the
   refill, projection and weekly row.
-- A signed-out provider is absent; a failing quota-axi shows one red
-  `quota read failed` chip with the error on hover.
+- A provider the user has set up but that cannot be read shows a dimmed
+  `CLA —` chip with the reason and the fixing command on hover, not
+  silence; one never signed in is absent.
+- A failing quota-axi shows one red `quota read failed` chip with the error
+  on hover.
 - The pace tick sits left of the fill when the burn is faster than the
   clock, right when slower.
