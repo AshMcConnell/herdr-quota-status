@@ -71,7 +71,9 @@ without herdr-quota the chips still work, but clicking one does nothing.
   `~85 % over at reset` or `~87 % left at reset`; then up to three weekly
   and monthly windows, each with its own bar and reset. When the provider
   reports a credit balance (Command Code), a `monthly credits` row shows
-  what is left. Cards follow the pointer between chips in under a tenth of
+  what is left. The card hangs above its chip, so its hover area never
+  covers the row: moving along to a neighbouring chip opens that card
+  immediately. Cards follow the pointer between chips in under a tenth of
   a second.
 - **Set up but unreadable** providers keep a dimmed chip instead of
   vanishing: the icon, the code, then `—` in `warn`, with the reason in the

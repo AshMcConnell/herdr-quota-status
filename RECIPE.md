@@ -72,11 +72,15 @@ time; never borrow another window's reset.
 
 ## Hover card
 
-A `HoverCard` from `gpui-base`: trigger is the chip, content is a
-transparent `v_flex` with 20 px bottom padding wrapping the panel, so the
-panel sits 20 px above the bar and the gap stays inside the hover region.
-Open delay 90 ms, close delay 60 ms. Panel: 262 px wide, 12 px padding,
-7 px gaps, `popover` background, 1 px `border`, 10 px radius.
+A `HoverCard` from `gpui-base`: trigger is the chip, anchored
+`bottom_center`, so the card hangs above the chip. Its content is a
+transparent `v_flex` with 6 px bottom padding wrapping the panel: that
+padding is the pointer's bridge from chip to panel, and it sits above the
+bar rather than over it. The card's box ends at the chip's top edge, so its
+mouse-blocking bounds never cover the row and a neighbouring chip starts
+its own card the moment the pointer reaches it. Open delay 90 ms, close
+delay 60 ms. Panel: 262 px wide, 12 px padding, 7 px gaps, `popover`
+background, 1 px `border`, 10 px radius.
 
 Top to bottom:
 

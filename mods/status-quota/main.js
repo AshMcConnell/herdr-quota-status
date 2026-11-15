@@ -13,7 +13,7 @@ const TICK_MS = 60_000;
 const MAX_AGE = "4m";
 const FRESH_MAX_AGE = "0"; // a manual refresh never reuses a cached reading
 const MAX_CHIPS = 10;
-const CARD_GAP = 20; // px of transparent space under the hover card
+const CARD_GAP = 6; // px of transparent bridge under the card, above the chips
 const CARD_OPEN_MS = 90; // quick enough to follow the pointer between chips
 const CARD_CLOSE_MS = 60;
 
@@ -391,7 +391,11 @@ export default class StatusQuota extends View {
       .child(div().text_color(t.muted).child(label))
       .child(div().text_color(risk).child(`${percent}%`))
       .when(!!when, (el) => el.child(div().text_color(t.dim).child(`· ${when}`)));
-    return HoverCard.new(`quota-card-${p.name}`).open_delay(CARD_OPEN_MS).close_delay(CARD_CLOSE_MS)
+    // Hang the card above the chip: its hover box then ends at the chip's
+    // top edge, so a neighbour chip is never under the card and its own card
+    // opens as soon as the pointer reaches it.
+    return HoverCard.new(`quota-card-${p.name}`).anchor("bottom_center")
+      .open_delay(CARD_OPEN_MS).close_delay(CARD_CLOSE_MS)
       .trigger(body)
       .content(v_flex().pb(CARD_GAP).child(this.card(t, row)));
   }
@@ -429,7 +433,8 @@ export default class StatusQuota extends View {
       .when(!!icon, (el) => el.child(this.providerIcon(t, row.name, icon, 11)))
       .child(div().text_color(t.dim).child(label))
       .child(div().text_color(t.ansi3).child("—"));
-    return HoverCard.new(`quota-card-${row.name}`).open_delay(CARD_OPEN_MS).close_delay(CARD_CLOSE_MS)
+    return HoverCard.new(`quota-card-${row.name}`).anchor("bottom_center")
+      .open_delay(CARD_OPEN_MS).close_delay(CARD_CLOSE_MS)
       .trigger(body)
       .content(v_flex().pb(CARD_GAP).child(this.brokenCard(t, row)));
   }
