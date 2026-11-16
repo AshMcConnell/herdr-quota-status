@@ -30,7 +30,7 @@ cd quota-axi && pnpm install && pnpm build && npm link
 An update that reinstalls upstream quota-axi replaces the link; re-run
 `npm link` from the fork afterwards.
 
-Copy `mods/status-quota/` into `~/.config/herdr-app/mods/`, or ask your agent:
+Run `./install.sh` — it copies `mods/status-quota/` into `~/.config/herdr-app/mods/` and checks the result. Or copy the folder yourself, or ask your agent:
 
 > Read ~/.config/herdr-app/AGENTS.md, then add this mod: herdr.dev/mods/AshMcConnell/herdr-quota-status
 
